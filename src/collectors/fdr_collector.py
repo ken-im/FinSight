@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import date, timedelta
+from datetime import date
 
 import FinanceDataReader as fdr
 import numpy as np
@@ -30,9 +30,16 @@ _COLUMN_MAP: dict[str, str] = {
 
 
 def default_period(years: int = 10) -> tuple[str, str]:
-    """수집 기간(start, end)을 `YYYY-MM-DD` 문자열로 반환한다. (기본 최근 10년)"""
+    """수집 기간(start, end)을 `YYYY-MM-DD` 문자열로 반환한다. (기본 최근 10년)
+
+    timedelta 방식은 윤년을 고려하지 않아 실제보다 짧은 기간이 산출되므로
+    date.replace()로 정확히 N년을 뺀다. (2/29 → 2/28 자동 보정)
+    """
     end = date.today()
-    start = end - timedelta(days=365 * years)
+    try:
+        start = end.replace(year=end.year - years)
+    except ValueError:
+        start = end.replace(year=end.year - years, day=28)
     return start.isoformat(), end.isoformat()
 
 

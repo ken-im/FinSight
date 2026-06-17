@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "finance-datareader>=0.9.96",
+    "numpy>=1.26",
     "pandas>=2.2",
     "sqlalchemy>=2.0",
     "psycopg[binary]>=3.2",

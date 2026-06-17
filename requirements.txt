@@ -19,7 +19,9 @@ lxml==6.1.1
 narwhals==2.22.1
     # via plotly
 numpy==2.4.6
-    # via pandas
+    # via
+    #   finsight
+    #   pandas
 packaging==26.2
     # via plotly
 pandas==3.0.3

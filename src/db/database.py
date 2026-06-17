@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+import time
 
 from dotenv import load_dotenv
 from sqlalchemy import Engine, create_engine, text
@@ -13,6 +14,10 @@ from sqlalchemy.orm import Session, sessionmaker
 logger = logging.getLogger(__name__)
 
 load_dotenv()
+
+# Neon 콜드 스타트 재시도 설정
+_HEALTHCHECK_RETRIES = 3
+_HEALTHCHECK_RETRY_DELAY = 5  # 초
 
 
 def get_database_url() -> str:
@@ -56,13 +61,25 @@ SessionLocal: sessionmaker[Session] = sessionmaker(
 )
 
 
-def healthcheck() -> bool:
-    """`SELECT 1`로 DB 접속 가능 여부를 확인한다."""
-    try:
-        with engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
-        logger.info("DB 접속 확인 완료")
-        return True
-    except Exception:
-        logger.exception("DB 접속 실패")
-        return False
+def healthcheck(retries: int = _HEALTHCHECK_RETRIES, delay: int = _HEALTHCHECK_RETRY_DELAY) -> bool:
+    """`SELECT 1`로 DB 접속 가능 여부를 확인한다.
+
+    Neon 서버리스 특성상 콜드 스타트 시 첫 연결이 실패할 수 있으므로
+    `retries`회까지 `delay`초 간격으로 재시도한다.
+    """
+    for attempt in range(1, retries + 1):
+        try:
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            logger.info("DB 접속 확인 완료 (시도 %d/%d)", attempt, retries)
+            return True
+        except Exception:
+            if attempt < retries:
+                logger.warning(
+                    "DB 접속 실패 (시도 %d/%d) — %d초 후 재시도...",
+                    attempt, retries, delay,
+                )
+                time.sleep(delay)
+            else:
+                logger.exception("DB 접속 최종 실패 (시도 %d/%d)", attempt, retries)
+    return False

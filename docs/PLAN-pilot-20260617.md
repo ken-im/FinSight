@@ -194,10 +194,10 @@ FinSight/
 ## 5. 단계별 실행 계획
 
 ### 단계 0. 사전 준비
-- [ ] Neon 프로젝트 생성 → 데이터베이스 및 연결 문자열(Connection String) 발급
-- [ ] `.env` 에 연결 정보 설정 (`DATABASE_URL=postgresql+psycopg://USER:PASSWORD@HOST/DB?sslmode=require`)
-- [ ] `.gitignore` 에 `.env`, `.venv/` 포함 확인
-- [ ] **uv 설치** 후 프로젝트 초기화 및 의존성 설치 (Python 3.12)
+- [x] Neon 프로젝트 생성 → 데이터베이스 및 연결 문자열(Connection String) 발급
+- [x] `.env` 에 연결 정보 설정 (`DATABASE_URL=postgresql+psycopg://USER:PASSWORD@HOST/DB?sslmode=require`)
+- [x] `.gitignore` 에 `.env`, `.venv/` 포함 확인
+- [x] **uv 설치** 후 프로젝트 초기화 및 의존성 설치 (Python 3.12)
 
 uv 환경 구성 (파일럿 최소):
 ```bash
@@ -217,35 +217,46 @@ uv export --no-hashes -o requirements.txt
 ```
 
 ### 단계 1. DB 연결 모듈 작성 (`src/db/database.py`)
-- [ ] `python-dotenv` 로 `.env` 로드
-- [ ] `DATABASE_URL` 기반 SQLAlchemy `Engine` / `sessionmaker` 생성
-- [ ] 연결 헬스체크 함수(`SELECT 1`)로 Neon 접속 확인
+- [x] `python-dotenv` 로 `.env` 로드
+- [x] `DATABASE_URL` 기반 SQLAlchemy `Engine` / `sessionmaker` 생성
+- [x] 연결 헬스체크 함수(`SELECT 1`)로 Neon 접속 확인
 
 ### 단계 2. 테이블 모델링 및 생성 (`src/db/models.py`, `src/init_db.py`)
-- [ ] 3장의 ORM 모델 정의 (`symbol_id` 시퀀스 PK, `source` 컬럼 포함)
-- [ ] `Base.metadata.create_all(engine)` 로 테이블 생성
-- [ ] 종목마스터에 KS200 1건 등록 (upsert by `source`+`symbol`): `source=FDR, symbol=KS200, symbol_nm=KOSPI 200, remark=코스피 200개 기업 지수`
-- [ ] 등록 후 채번된 `symbol_id` 조회하여 후속 적재에 사용
+- [x] 3장의 ORM 모델 정의 (`symbol_id` 시퀀스 PK, `source` 컬럼 포함)
+- [x] `Base.metadata.create_all(engine)` 로 테이블 생성
+- [x] 종목마스터에 KS200 1건 등록 (upsert by `source`+`symbol`): `source=FDR, symbol=KS200, symbol_nm=KOSPI 200, remark=코스피 200개 기업 지수`
+- [x] 등록 후 채번된 `symbol_id` 조회하여 후속 적재에 사용
 
 ### 단계 3. 데이터 수집 (`src/collectors/fdr_collector.py`)
-- [ ] 데이터 원천(`source`)별 수집 함수 구조로 작성 (파일럿은 `FDR` 1종, 추후 원천 추가 대비)
-- [ ] 수집 기간 계산: `start = today - 10년`, `end = today`
-- [ ] `fdr.DataReader('KS200', start, end)` 호출 → DataFrame 반환
-- [ ] 컬럼 매핑/정규화: `Open/High/Low/Close/Volume/Change` → 모델 컬럼
-- [ ] 결측치 처리 및 일자 인덱스를 `trade_dt`(`YYYYMMDD` 문자열) 로 변환
+- [x] 데이터 원천(`source`)별 수집 함수 구조로 작성 (파일럿은 `FDR` 1종, 추후 원천 추가 대비)
+- [x] 수집 기간 계산: `start = today - 10년`, `end = today`
+- [x] `fdr.DataReader('KS200', start, end)` 호출 → DataFrame 반환
+- [x] 컬럼 매핑/정규화: `Open/High/Low/Close/Volume/Change` → 모델 컬럼
+- [x] 결측치 처리 및 일자 인덱스를 `trade_dt`(`YYYYMMDD` 문자열) 로 변환
 
 ### 단계 4. Neon DB 적재 (`src/collect_ks200.py`)
-- [ ] (`source`, `symbol`) 로 `symbol_master` 조회/등록 후 `symbol_id` 확보
-- [ ] 수집 DataFrame → `DailyPrice` 레코드 변환 (`symbol_id` 부여)
-- [ ] `INSERT ... ON CONFLICT (symbol_id, trade_dt) DO UPDATE` 멱등 upsert로 저장
-- [ ] 배치 처리(예: 500행 단위) 및 트랜잭션 커밋
-- [ ] 적재 건수 로그 출력
+- [x] (`source`, `symbol`) 로 `symbol_master` 조회/등록 후 `symbol_id` 확보
+- [x] 수집 DataFrame → `DailyPrice` 레코드 변환 (`symbol_id` 부여)
+- [x] `INSERT ... ON CONFLICT (symbol_id, trade_dt) DO UPDATE` 멱등 upsert로 저장
+- [x] 배치 처리(예: 500행 단위) 및 트랜잭션 커밋
+- [x] 적재 건수 로그 출력
 
 ### 단계 5. 검증
-- [ ] KS200의 `symbol_id` 기준 `SELECT COUNT(*) FROM daily_price WHERE symbol_id = :id` 로 적재 건수 확인 (약 2,400~2,500 영업일 예상)
-- [ ] 최신 일자 / 최초 일자 범위 확인 (`MIN/MAX(trade_dt)`)
-- [ ] 임의 일자 종가를 원천 데이터와 대조
-- [ ] 스크립트 재실행 시 중복 없이 동일 결과(멱등성) 확인
+- [x] KS200의 `symbol_id` 기준 `SELECT COUNT(*) FROM daily_price WHERE symbol_id = :id` 로 적재 건수 확인 (약 2,400~2,500 영업일 예상)
+- [x] 최신 일자 / 최초 일자 범위 확인 (`MIN/MAX(trade_dt)`)
+- [x] 임의 일자 종가를 원천 데이터와 대조
+- [x] 스크립트 재실행 시 중복 없이 동일 결과(멱등성) 확인
+
+#### 검증 결과 (2026-06-17)
+| 항목 | 결과 |
+| --- | --- |
+| `symbol_id` | 1 (`FDR` / `KS200`) |
+| 적재 건수 | **2,452건** (예상 범위 내) |
+| 일자 범위 | `20160617` ~ `20260617` |
+| 종가 대조 (`20240102`) | DB `360.5500` == FDR `360.55` (일치) |
+| 멱등성 | 재실행 시 건수 유지(2,452건), 중복 적재 없음 |
+
+> 참고: 수집 기준일 기반 **롤링 10년 윈도우**라, 실행 시점에 따라 시작 경계 영업일 ±1건 정도가 가감될 수 있다(예: 최초 적재 시 2,451건 → 경계일 `20160617` 1건 추가로 2,452건). 이는 `(symbol_id, trade_dt)` upsert로 중복 없이 흡수되므로 멱등성에는 영향이 없다.
 
 ## 6. 완료 기준 (Definition of Done)
 - Neon DB에 `symbol_master`(KS200 1건), `daily_price`(KS200 약 10년치) 테이블/데이터가 존재한다.
