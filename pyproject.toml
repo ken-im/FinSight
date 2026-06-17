@@ -1,0 +1,19 @@
+[project]
+name = "finsight"
+version = "0.1.0"
+description = "FinSight - 금융데이터 수집·저장·시각화 (파일럿: KS200 수집)"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "finance-datareader>=0.9.96",
+    "pandas>=2.2",
+    "sqlalchemy>=2.0",
+    "psycopg[binary]>=3.2",
+    "python-dotenv>=1.0",
+]
+
+[dependency-groups]
+dev = []
+
+[tool.uv]
+package = false

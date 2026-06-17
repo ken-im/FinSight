@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# uv / 가상환경
+.venv/
+
+# 환경변수 (비밀정보)
+.env
+
+# 로그
+*.log
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
