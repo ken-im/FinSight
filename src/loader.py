@@ -32,8 +32,22 @@ _UPDATE_COLS = [
 
 
 def to_records(df: pd.DataFrame, symbol_id: int) -> list[dict]:
-    """정규화된 DataFrame을 daily_price 적재용 레코드 리스트로 변환한다."""
-    return [{"symbol_id": symbol_id, **row} for row in df.to_dict(orient="records")]
+    """정규화된 DataFrame을 daily_price 적재용 레코드 리스트로 변환한다.
+
+    `close_price`가 없는(None) 일자는 적재 대상에서 제외한다(NOT NULL 컬럼).
+    """
+    records: list[dict] = []
+    dropped = 0
+    for row in df.to_dict(orient="records"):
+        if row.get("close_price") is None:
+            dropped += 1
+            continue
+        records.append({"symbol_id": symbol_id, **row})
+    if dropped:
+        logger.warning(
+            "close_price 누락으로 %d건 제외 (symbol_id=%s)", dropped, symbol_id
+        )
+    return records
 
 
 def upsert_daily_prices(
