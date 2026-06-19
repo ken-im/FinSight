@@ -97,7 +97,7 @@ uv run streamlit run dashboard/app.py
 ```
 
 - 로컬 URL: http://localhost:8501
-- 배포 URL(Streamlit Community Cloud): `<배포 후 URL>`
+- 배포 URL(Streamlit Community Cloud): https://finsight-6w7curblqtuspd88xx7wjy.streamlit.app/
 - 관리자 페이지는 비밀번호 인증 필요(`ADMIN_PASSWORD`).
   - 로컬: `.streamlit/secrets.toml`, 배포: Cloud Secrets에 `DATABASE_URL`·`ADMIN_PASSWORD` 설정.
 
