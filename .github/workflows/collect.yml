@@ -2,8 +2,8 @@ name: collect-daily
 
 on:
   schedule:
-    # UTC 기준. 매일 23:00 UTC = 08:00 KST(다음 날)
-    - cron: "0 23 * * *"
+    # UTC 기준. 매일 22:17 UTC = 07:17 KST(다음 날). 정각 회피로 예약 지연 완화.
+    - cron: "17 22 * * *"
   workflow_dispatch:
     inputs:
       to_date:
