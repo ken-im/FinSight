@@ -38,14 +38,17 @@ def get_database_url() -> str:
     return parsed.render_as_string(hide_password=False)
 
 
-def create_db_engine(echo: bool = False) -> Engine:
+def create_db_engine(echo: bool = False, url: str | None = None) -> Engine:
     """SQLAlchemy Engine을 생성한다.
 
     Neon(서버리스)의 콜드 스타트/유휴 연결 종료에 대비해
     `pool_pre_ping`으로 끊어진 커넥션을 자동 감지·재연결한다.
+
+    `url`이 주어지면 해당 연결 문자열을 사용하고, 생략하면 환경변수에서 읽는다.
+    (Streamlit Cloud 등 `st.secrets` 기반 URL 주입을 위해 인자를 받는다.)
     """
     return create_engine(
-        get_database_url(),
+        url or get_database_url(),
         echo=echo,
         pool_pre_ping=True,
         pool_recycle=300,
