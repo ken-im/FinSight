@@ -1,15 +1,22 @@
-"""daily_price 페이징 조회 서비스."""
+"""daily_price query service.
+
+Admin pages : count_prices, list_prices
+Dashboard   : get_series, list_symbol_coverage
+"""
 
 from __future__ import annotations
 
+import streamlit as st
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from dashboard.services.connection import get_engine
-from src.db.models import DailyPrice
+from src.db.models import DailyPrice, SymbolMaster
 
-PAGE_SIZE = 20
+PAGE_SIZE = 30
 
+
+# ── Admin pages ──────────────────────────────────────────────────────────
 
 def count_prices(symbol_id: int) -> int:
     with Session(get_engine()) as session:
@@ -21,7 +28,7 @@ def count_prices(symbol_id: int) -> int:
 
 
 def list_prices(symbol_id: int, page: int = 1, page_size: int = PAGE_SIZE) -> list[dict]:
-    """trade_dt DESC, 페이지당 page_size행."""
+    """trade_dt DESC, page_size rows per page."""
     offset = max(0, (page - 1) * page_size)
     with Session(get_engine()) as session:
         stmt = (
@@ -33,14 +40,87 @@ def list_prices(symbol_id: int, page: int = 1, page_size: int = PAGE_SIZE) -> li
         )
         return [
             {
-                "trade_dt": r.trade_dt,
-                "close_price": r.close_price,
-                "open_price": r.open_price,
-                "high_price": r.high_price,
-                "low_price": r.low_price,
-                "volume": r.volume,
+                "trade_dt":     r.trade_dt,
+                "close_price":  r.close_price,
+                "open_price":   r.open_price,
+                "high_price":   r.high_price,
+                "low_price":    r.low_price,
+                "volume":       r.volume,
                 "trade_amount": r.trade_amount,
-                "change_rate": r.change_rate,
+                "change_rate":  r.change_rate,
             }
             for r in session.scalars(stmt)
+        ]
+
+
+# ── Dashboard ─────────────────────────────────────────────────────────────
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def get_series(
+    symbol_ids: tuple[int, ...], from_dt: str, to_dt: str
+) -> list[dict]:
+    """Multi-symbol close price for a date range.
+
+    Args:
+        symbol_ids: sorted tuple for consistent cache keys.
+        from_dt / to_dt: YYYYMMDD strings (both inclusive).
+
+    Returns:
+        List of {symbol_id, trade_dt, close_price}.
+    """
+    if not symbol_ids:
+        return []
+    with Session(get_engine()) as session:
+        stmt = (
+            select(
+                DailyPrice.symbol_id,
+                DailyPrice.trade_dt,
+                DailyPrice.close_price,
+            )
+            .where(
+                DailyPrice.symbol_id.in_(list(symbol_ids)),
+                DailyPrice.trade_dt >= from_dt,
+                DailyPrice.trade_dt <= to_dt,
+            )
+            .order_by(DailyPrice.trade_dt, DailyPrice.symbol_id)
+        )
+        return [
+            {
+                "symbol_id":   r.symbol_id,
+                "trade_dt":    r.trade_dt,
+                "close_price": float(r.close_price),
+            }
+            for r in session.execute(stmt)
+        ]
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def list_symbol_coverage() -> list[dict]:
+    """Per-symbol data coverage (MIN/MAX trade_dt and row count).
+
+    Returns:
+        List of {symbol_id, symbol_nm, from_dt, to_dt, cnt}.
+    """
+    with Session(get_engine()) as session:
+        stmt = (
+            select(
+                SymbolMaster.symbol_id,
+                SymbolMaster.symbol_nm,
+                func.min(DailyPrice.trade_dt).label("from_dt"),
+                func.max(DailyPrice.trade_dt).label("to_dt"),
+                func.count().label("cnt"),
+            )
+            .join(DailyPrice, SymbolMaster.symbol_id == DailyPrice.symbol_id)
+            .group_by(SymbolMaster.symbol_id, SymbolMaster.symbol_nm)
+            .order_by(SymbolMaster.symbol_id)
+        )
+        return [
+            {
+                "symbol_id": r.symbol_id,
+                "symbol_nm": r.symbol_nm,
+                "from_dt":   r.from_dt,
+                "to_dt":     r.to_dt,
+                "cnt":       r.cnt,
+            }
+            for r in session.execute(stmt)
         ]

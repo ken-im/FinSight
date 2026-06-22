@@ -3,16 +3,17 @@
 시장의 금융데이터(지수, 주가 등)를 수집·저장·시각화하는 개인 프로젝트.
 
 - 아키텍처/기술 스택: [docs/PRD-20260323.md](docs/PRD-20260323.md)
-- 파일럿(KS200 수집·적재) 계획: [docs/PLAN-pilot-20260617.md](docs/PLAN-pilot-20260617.md)
+- 파일럿 계획: [docs/PLAN-pilot-20260617.md](docs/PLAN-pilot-20260617.md)
 - 백엔드 수집 배치 계획: [docs/PLAN-backend-20260617.md](docs/PLAN-backend-20260617.md)
 - 정기 수집 자동화 계획: [docs/PLAN-cron-20260618.md](docs/PLAN-cron-20260618.md)
-- 프런트엔드(관리자/대시보드) 계획: [docs/PLAN-front-20260619.md](docs/PLAN-front-20260619.md)
+- 프런트엔드(관리자) 계획: [docs/PLAN-front-20260619.md](docs/PLAN-front-20260619.md)
+- 프런트엔드(대시보드) 계획: [docs/PLAN-front-20260622.md](docs/PLAN-front-20260622.md)
 
 ## 기능 범위
 
-- **수집·적재(백엔드)**: PRD 2.1 전체 종목을 FinanceDataReader/yfinance로 수집해 Neon DB(PostgreSQL)에 일괄 적재. 수집 원천은 종목마스터의 `source` 컬럼으로 분기(`FDR`, `YAHOO`), GitHub Actions cron으로 매일 자동 실행.
-- **관리자 화면(프런트엔드, 1차 완료)**: Streamlit 기반. 종목마스터 CRUD(중복 검증·삭제 가드)와 종목 종가내역 페이징 조회. 공유 비밀번호 인증으로 보호.
-- 대시보드(시각화) 화면은 후속 예정.
+- **수집·적재(백엔드)**: PRD 2.1 전체 16종목을 FinanceDataReader/yfinance로 수집해 Neon DB(PostgreSQL)에 일괄 적재. 수집 원천은 종목마스터의 `source` 컬럼으로 분기(`FDR`, `YAHOO`). GitHub Actions cron으로 매일 자동 실행.
+- **관리자 화면**: Streamlit 기반. 종목마스터 CRUD(중복 검증·삭제 가드)와 종목 종가내역 페이징 조회. 공유 비밀번호 인증으로 보호.
+- **시각화 대시보드**: 최대 10개 금융지표를 선택해 Plotly 인터랙티브 차트로 비교. 정규화(기준 100)/원본 전환, 기간 프리셋, Dark/Light 테마, CSV 다운로드 제공.
 
 ## 디렉토리 구조
 
@@ -33,7 +34,11 @@ src/
 logs/                      # 실행 로그 finsight_{to일자}.log (gitignore)
 
 dashboard/                 # Streamlit 프런트엔드
-├── app.py                 # 엔트리(홈/네비게이션)
+├── app.py                 # 대시보드 메인 (시각화, 홈 🏠)
+├── finsight_lib/          # 시각화 유틸 패키지
+│   ├── palette.py         # RAINBOW 15색, COLOR_MAP, CHART_THEMES
+│   ├── periods.py         # 기간 프리셋 계산
+│   └── transform.py       # wide 피벗, ffill, 정규화
 ├── pages/
 │   ├── 1_admin_symbols.py # 종목마스터 관리(CRUD)
 │   └── 2_admin_prices.py  # 종가내역 조회(페이징)
@@ -88,9 +93,9 @@ uv run python -m src.collect --symbol-id 3 --from-date 20160101 --to-date 202606
 | `--from-date` | `yyyymmdd` | to일자 − 1개월 | 수집 시작일(from) |
 | `--symbol-id` | 정수 | 전체 | 특정 종목만 수집 |
 
-- 실행 로그는 `logs/finsight_{to일자}.log`에 기록되며, 종료 시 종목별 요약(명칭·from·to·총건수·상태)을 남긴다.
+실행 로그는 `logs/finsight_{to일자}.log`에 기록되며, 종료 시 종목별 요약(명칭·from·to·총건수·상태)을 남긴다.
 
-### 3) 관리자 대시보드 (Streamlit)
+### 3) 대시보드 실행 (Streamlit)
 
 ```bash
 uv run streamlit run dashboard/app.py
@@ -101,14 +106,31 @@ uv run streamlit run dashboard/app.py
 - 관리자 페이지는 비밀번호 인증 필요(`ADMIN_PASSWORD`).
   - 로컬: `.streamlit/secrets.toml`, 배포: Cloud Secrets에 `DATABASE_URL`·`ADMIN_PASSWORD` 설정.
 
+#### 서버 완전 종료
+
+`Ctrl+C` 로 종료 후 잔존 프로세스가 남는 경우 아래 명령으로 강제 종료한다.
+
+```powershell
+# 실행 중인 Python / Streamlit 프로세스 목록 확인
+Get-Process -Name "streamlit","python" -ErrorAction SilentlyContinue | Select-Object Id, Name, StartTime
+
+# 모두 강제 종료
+Get-Process -Name "streamlit","python" -ErrorAction SilentlyContinue | Stop-Process -Force
+```
+
+> 프로세스를 종료하지 않은 채 파일을 수정하면, 구 버전 모듈이 메모리에 캐시된 상태로 import 오류가 반복될 수 있다.
+
 ### (참고) 파일럿 단일 수집
 
 ```bash
 uv run python -m src.collect_ks200   # KS200 최근 10년치 수집·적재
 ```
 
-## 배포용 requirements.txt 갱신
+## 배포용 requirements.txt
+
+`requirements.txt`는 Streamlit Cloud 전용 프런트 경량 버전이다. 수동으로 관리하며, 백엔드 수집 배치는 `uv.lock` 기반 `uv sync --frozen`으로 실행한다.
 
 ```bash
+# 전체 재생성이 필요한 경우 (주의: 백엔드 패키지가 포함되므로 수동 정리 필요)
 uv export --no-hashes --no-dev -o requirements.txt
 ```
