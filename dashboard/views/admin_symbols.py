@@ -1,19 +1,10 @@
-"""관리자 — 종목마스터 관리 (PRD 7.1)."""
-
-# --- sys.path 부트스트랩 (다른 import보다 먼저) ---
-import sys
-from pathlib import Path
-
-ROOT = next(p for p in Path(__file__).resolve().parents if (p / "src").is_dir())
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
-# --------------------------------------------------
+"""\uad00\ub9ac\uc790 \u2014 \uc885\ubaa9\ub9c8\uc2a4\ud130 \uad00\ub9ac (PRD 7.1)."""
 
 import pandas as pd
 import streamlit as st
 
-from dashboard.services.auth import require_admin
-from dashboard.services.symbol_service import (
+from services.auth import require_admin
+from services.symbol_service import (
     DeleteBlockedError,
     DuplicateSymbolError,
     create_symbol,
@@ -22,10 +13,9 @@ from dashboard.services.symbol_service import (
     update_symbol,
 )
 
-st.set_page_config(page_title="종목마스터 관리", page_icon="🗂️", layout="wide")
 require_admin()
 
-st.header("🗂️ 종목마스터 관리")
+st.header("\U0001f5c2\ufe0f \uc885\ubaa9\ub9c8\uc2a4\ud130 \uad00\ub9ac")
 
 FORM_KEYS = {
     "source": "form_source",
@@ -40,8 +30,8 @@ def _clear_selection() -> None:
         st.session_state.pop(key, None)
 
 
-# ── 필터 ─────────────────────────────────────────────
-with st.expander("필터", expanded=True):
+# \u2500\u2500 \ud544\ud130 \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+with st.expander("\ud544\ud130", expanded=True):
     c1, c2, c3, c4 = st.columns(4)
     f_id = c1.text_input("symbol_id")
     f_source = c2.text_input("source")
@@ -55,8 +45,8 @@ rows = list_symbols(
     symbol_nm=f_nm.strip() or None,
 )
 
-# ── 목록 (행 선택) ───────────────────────────────────
-st.subheader("종목 목록")
+# \u2500\u2500 \ubaa9\ub85d (\ud589 \uc120\ud0dd) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+st.subheader("\uc885\ubaa9 \ubaa9\ub85d")
 if rows:
     df = pd.DataFrame(rows)[["symbol_id", "source", "symbol", "symbol_nm", "remark"]]
     event = st.dataframe(
@@ -68,13 +58,12 @@ if rows:
         key="sym_table",
     )
     selected_rows = event.selection.rows
-    # 필터 변경/초기화로 행 수가 줄면 위젯에 남은 선택 인덱스가 범위를 벗어날 수 있어 가드
     if selected_rows and selected_rows[0] < len(rows):
         st.session_state["selected_symbol_id"] = rows[selected_rows[0]]["symbol_id"]
 else:
-    st.info("조건에 해당하는 종목이 없습니다.")
+    st.info("\uc870\uac74\uc5d0 \ud574\ub2f9\ud558\ub294 \uc885\ubaa9\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.")
 
-# ── 선택 변경 시 폼 동기화 ───────────────────────────
+# \u2500\u2500 \uc120\ud0dd \ubcc0\uacbd \uc2dc \ud3fc \ub3d9\uae30\ud654 \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 selected_id = st.session_state.get("selected_symbol_id")
 if selected_id != st.session_state.get("_bound_id"):
     st.session_state["_bound_id"] = selected_id
@@ -84,10 +73,10 @@ if selected_id != st.session_state.get("_bound_id"):
     st.session_state[FORM_KEYS["symbol_nm"]] = record.get("symbol_nm", "")
     st.session_state[FORM_KEYS["remark"]] = record.get("remark") or ""
 
-# ── 입력 폼 ──────────────────────────────────────────
-st.subheader("입력")
+# \u2500\u2500 \uc785\ub825 \ud3fc \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+st.subheader("\uc785\ub825")
 st.caption(
-    f"선택된 symbol_id: {selected_id}" if selected_id else "선택된 종목 없음 (신규 등록 가능)"
+    f"\uc120\ud0dd\ub41c symbol_id: {selected_id}" if selected_id else "\uc120\ud0dd\ub41c \uc885\ubaa9 \uc5c6\uc74c (\uc2e0\uaddc \ub4f1\ub85d \uac00\ub2a5)"
 )
 
 c1, c2 = st.columns(2)
@@ -109,31 +98,31 @@ def _form_values() -> dict:
 def _validate(values: dict) -> str | None:
     for field in ("source", "symbol", "symbol_nm"):
         if not values[field]:
-            return f"필수 항목 누락: {field}"
+            return f"\ud544\uc218 \ud56d\ubaa9 \ub204\ub77d: {field}"
     return None
 
 
-@st.dialog("삭제 확인")
+@st.dialog("\uc0ad\uc81c \ud655\uc778")
 def _confirm_delete(symbol_id: int, label: str) -> None:
-    st.write(f"**{label}** (symbol_id={symbol_id}) 을(를) 삭제하시겠습니까?")
+    st.write(f"**{label}** (symbol_id={symbol_id}) \uc744(\ub97c) \uc0ad\uc81c\ud558\uc2dc\uaca0\uc2b5\ub2c8\uae4c?")
     col_ok, col_cancel = st.columns(2)
-    if col_ok.button("삭제", type="primary", use_container_width=True):
+    if col_ok.button("\uc0ad\uc81c", type="primary", use_container_width=True):
         try:
             delete_symbol(symbol_id)
         except DeleteBlockedError as exc:
             st.error(str(exc))
             return
         _clear_selection()
-        st.session_state["_flash"] = "삭제되었습니다."
+        st.session_state["_flash"] = "\uc0ad\uc81c\ub418\uc5c8\uc2b5\ub2c8\ub2e4."
         st.rerun()
-    if col_cancel.button("취소", use_container_width=True):
+    if col_cancel.button("\ucde8\uc18c", use_container_width=True):
         st.rerun()
 
 
-# ── 버튼 ─────────────────────────────────────────────
+# \u2500\u2500 \ubc84\ud2bc \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 b1, b2, b3 = st.columns(3)
 
-if b1.button("신규", use_container_width=True):
+if b1.button("\uc2e0\uaddc", use_container_width=True):
     values = _form_values()
     error = _validate(values)
     if error:
@@ -145,10 +134,10 @@ if b1.button("신규", use_container_width=True):
             st.error(str(exc))
         else:
             _clear_selection()
-            st.session_state["_flash"] = f"등록되었습니다. (symbol_id={new_id})"
+            st.session_state["_flash"] = f"\ub4f1\ub85d\ub418\uc5c8\uc2b5\ub2c8\ub2e4. (symbol_id={new_id})"
             st.rerun()
 
-if b2.button("수정", use_container_width=True, disabled=selected_id is None):
+if b2.button("\uc218\uc815", use_container_width=True, disabled=selected_id is None):
     values = _form_values()
     error = _validate(values)
     if error:
@@ -161,13 +150,13 @@ if b2.button("수정", use_container_width=True, disabled=selected_id is None):
         except ValueError as exc:
             st.error(str(exc))
         else:
-            st.session_state["_flash"] = "수정되었습니다."
+            st.session_state["_flash"] = "\uc218\uc815\ub418\uc5c8\uc2b5\ub2c8\ub2e4."
             st.rerun()
 
-if b3.button("삭제", use_container_width=True, disabled=selected_id is None):
+if b3.button("\uc0ad\uc81c", use_container_width=True, disabled=selected_id is None):
     values = _form_values()
     _confirm_delete(selected_id, values.get("symbol_nm") or values.get("symbol") or "")
 
-# ── 플래시 메시지 ────────────────────────────────────
+# \u2500\u2500 \ud50c\ub798\uc2dc \uba54\uc2dc\uc9c0 \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 if msg := st.session_state.pop("_flash", None):
     st.success(msg)

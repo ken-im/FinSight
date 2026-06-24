@@ -126,20 +126,23 @@ dashboard/
 │ 시작일: 2025-06-24                             │
 │                                               │
 │ #### 이동평균선 설정                              │
-│ 이동평균 1: [3개월  ▼]  (MA3M, 60일)            │
-│ 이동평균 2: [1년    ▼]  (MA1Y, 250일)           │
-│ 이동평균 3: [3년    ▼]  (MA3Y, 750일)           │
+│ 이동평균 1: [5일    ▼]  (MA5D, 5일)             │
+│ 이동평균 2: [10일   ▼]  (MA10D, 10일)           │
+│ 이동평균 3: [3개월  ▼]  (MA3M, 60일)            │
 └───────────────────────────────────────────────┘
 ```
 
 - **시장지표 선택**: `st.selectbox` — `symbol_master` 전체 목록에서 1개 선택
 - **기간 설정**: 시장지표트랜드와 동일한 프리셋 (`periods.py` 재사용)
-- **이동평균선 3개**: 각각 `st.selectbox`로 기간 선택, 기본값 = 3개월, 1년, 3년
+- **이동평균선 3개**: 각각 `st.selectbox`로 기간 선택, 기본값 = 5일, 10일, 3개월
+- **이동평균 옵션**: 5일 | 10일 | 1개월 | 3개월 | 6개월 | 1년 | 2년 | 3년
 
 ### 5.2. 이동평균 설정 상수 (`finsight_lib/ma_config.py`)
 
 ```python
 MA_OPTIONS: dict[str, dict] = {
+    "5일":    {"window": 5,   "label": "MA5D"},
+    "10일":   {"window": 10,  "label": "MA10D"},
     "1개월":  {"window": 20,  "label": "MA1M"},
     "3개월":  {"window": 60,  "label": "MA3M"},
     "6개월":  {"window": 125, "label": "MA6M"},
@@ -148,11 +151,13 @@ MA_OPTIONS: dict[str, dict] = {
     "3년":    {"window": 750, "label": "MA3Y"},
 }
 
-MA_DEFAULTS: list[str] = ["3개월", "1년", "3년"]  # 이동평균 1/2/3 기본값
+MA_DEFAULTS: list[str] = ["5일", "10일", "3개월"]  # 이동평균 1/2/3 기본값
 ```
 
 | 설정 | 거래일 수 | 표시기호 | 산출 근거 |
 | --- | --- | --- | --- |
+| 5일 | 5 | MA5D | 1주 단기 |
+| 10일 | 10 | MA10D | 2주 단기 |
 | 1개월 | 20 | MA1M | 60 ÷ 3 = 20 |
 | 3개월 | 60 | MA3M | PRD 명시 |
 | 6개월 | 125 | MA6M | 250 ÷ 2 = 125 |
@@ -232,18 +237,18 @@ def calc_sma(
 
 #### 원본 데이터 라인
 - `go.Scatter` (mode="lines"), 선택한 지표의 종가 시계열
-- 색상: **오렌지 (`#e67e22`)**, 이동평균선보다 **1px 굵게** (width=2.8)
+- 색상: **밝은 앰버 (`#ffa726`)**, width=2.5 — `reference/fx_trend` 기준
 - 실선 스타일
 
 #### 이동평균선 3개
-- **모두 실선(solid)**, 선색으로 구분, 원본보다 1px 얇게 (width=1.8):
+- **모두 실선(solid)**, Bloomberg 다크 배경에서 선명한 고채도 색상, width=1:
   ```python
-  MA_LINE_STYLES: dict[int, dict] = {
-      0: {"dash": "solid", "width": 1.8, "color": "#3498db"},  # 단기 MA (파랑)
-      1: {"dash": "solid", "width": 1.8, "color": "#2ecc71"},  # 중기 MA (초록)
-      2: {"dash": "solid", "width": 1.8, "color": "#9b59b6"},  # 장기 MA (보라)
-  }
-  PRICE_LINE_STYLE: dict = {"dash": "solid", "width": 2.8, "color": "#e67e22"}  # 원본 (오렌지)
+  MA_LINE_STYLES: list[dict] = [
+      {"dash": "solid", "width": 1, "color": "#ff6b6b"},  # 코랄 (연한 빨강)
+      {"dash": "solid", "width": 1, "color": "#5dd0f5"},  # 시안 (밝은 하늘)
+      {"dash": "solid", "width": 1, "color": "#7ee787"},  # 민트 그린 (밝은 연두)
+  ]
+  PRICE_LINE_STYLE: dict = {"dash": "solid", "width": 2.5, "color": "#ffa726"}  # 원본 (앰버)
   ```
 
 #### 최고/최저/최근 표시

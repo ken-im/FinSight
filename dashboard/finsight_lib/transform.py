@@ -21,6 +21,27 @@ def to_wide(rows: list[dict], symbol_id_to_nm: dict[int, str]) -> pd.DataFrame:
     return wide.sort_index().ffill()
 
 
+def calc_sma(
+    df: pd.DataFrame,
+    close_col: str,
+    windows: dict[str, int],
+) -> pd.DataFrame:
+    """Calculate Simple Moving Averages and append as new columns.
+
+    Args:
+        df: DatetimeIndex, must contain *close_col*.
+        close_col: column name for close price.
+        windows: ``{"MA3M": 60, "MA1Y": 250, ...}`` label -> window size.
+
+    Returns:
+        Copy of *df* with MA columns appended.
+    """
+    result = df.copy()
+    for label, w in windows.items():
+        result[label] = result[close_col].rolling(window=w, min_periods=w).mean()
+    return result
+
+
 def normalize_100(wide: pd.DataFrame) -> pd.DataFrame:
     """Normalize each column: first valid value = 100."""
     if wide.empty:

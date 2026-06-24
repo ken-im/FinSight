@@ -94,6 +94,49 @@ def get_series(
         ]
 
 
+def list_daily_prices(
+    symbol_id: int,
+    from_dt: str,
+    to_dt: str,
+    page: int = 1,
+    page_size: int = PAGE_SIZE,
+) -> tuple[list[dict], int]:
+    """Daily prices within date range with pagination.
+
+    Returns:
+        (rows, total_count) where rows are trade_dt DESC.
+    """
+    with Session(get_engine()) as session:
+        base = (
+            select(DailyPrice)
+            .where(
+                DailyPrice.symbol_id == symbol_id,
+                DailyPrice.trade_dt >= from_dt,
+                DailyPrice.trade_dt <= to_dt,
+            )
+        )
+        total = session.scalar(
+            select(func.count()).select_from(base.subquery())
+        ) or 0
+
+        offset = max(0, (page - 1) * page_size)
+        stmt = base.order_by(DailyPrice.trade_dt.desc()).limit(page_size).offset(offset)
+        rows = [
+            {
+                "trade_dt":     r.trade_dt,
+                "close_price":  r.close_price,
+                "open_price":   r.open_price,
+                "high_price":   r.high_price,
+                "low_price":    r.low_price,
+                "volume":       r.volume,
+                "trade_amount": r.trade_amount,
+                "change_rate":  r.change_rate,
+            }
+            for r in session.scalars(stmt)
+        ]
+    return rows, total
+
+
 @st.cache_data(ttl=3600, show_spinner=False)
 def list_symbol_coverage() -> list[dict]:
     """Per-symbol data coverage (MIN/MAX trade_dt and row count).
