@@ -8,12 +8,15 @@
 - 정기 수집 자동화 계획: [docs/PLAN-cron-20260618.md](docs/PLAN-cron-20260618.md)
 - 프런트엔드(관리자) 계획: [docs/PLAN-front-20260619.md](docs/PLAN-front-20260619.md)
 - 프런트엔드(대시보드) 계획: [docs/PLAN-front-20260622.md](docs/PLAN-front-20260622.md)
+- 대시보드 V2(메뉴 개편·이동평균분석) 계획: [docs/PLAN-front-20260624.md](docs/PLAN-front-20260624.md)
 
 ## 기능 범위
 
 - **수집·적재(백엔드)**: PRD 2.1 전체 16종목을 FinanceDataReader/yfinance로 수집해 Neon DB(PostgreSQL)에 일괄 적재. 수집 원천은 종목마스터의 `source` 컬럼으로 분기(`FDR`, `YAHOO`). GitHub Actions cron으로 매일 자동 실행.
-- **관리자 화면**: Streamlit 기반. 종목마스터 CRUD(중복 검증·삭제 가드)와 종목 종가내역 페이징 조회. 공유 비밀번호 인증으로 보호.
-- **시각화 대시보드**: 최대 10개 금융지표를 선택해 Plotly 인터랙티브 차트로 비교. 정규화(기준 100)/원본 전환, 기간 프리셋, Dark/Light 테마, CSV 다운로드 제공.
+- **관리자 화면**: Streamlit 기반. 종목마스터 CRUD(중복 검증·삭제 가드). 공유 비밀번호 인증으로 보호.
+- **시장지표트랜드**: 최대 10개 금융지표를 선택해 Plotly 인터랙티브 차트로 비교. 정규화(기준 100)/원본 전환, 기간 프리셋, Dark/Light 테마, CSV 다운로드 제공.
+- **이동평균분석**: 단일 지표에 대한 SMA(단순이동평균) 3개선 중첩 차트. 5일~3년 범위의 MA 윈도우 선택, 최고/최저/현재가 표시, 분기 X축.
+- **시장지표일별시세**: 단일 지표의 기간별 일별 시세(OHLCV) 조회. 기간 프리셋 지원.
 
 ## 디렉토리 구조
 
@@ -34,14 +37,17 @@ src/
 logs/                      # 실행 로그 finsight_{to일자}.log (gitignore)
 
 dashboard/                 # Streamlit 프런트엔드
-├── app.py                 # 대시보드 메인 (시각화, 홈 🏠)
+├── app.py                 # st.navigation() 라우터 (메뉴 구성)
+├── views/                 # 페이지 뷰
+│   ├── market_trend.py    # 시장지표트랜드 (다중 비교 차트, 홈)
+│   ├── ma_analysis.py     # 이동평균분석 (SMA 중첩 차트)
+│   ├── daily_market.py    # 시장지표일별시세 (일별 시세 조회)
+│   └── admin_symbols.py   # Admin Symbols (종목마스터 CRUD)
 ├── finsight_lib/          # 시각화 유틸 패키지
 │   ├── palette.py         # RAINBOW 15색, COLOR_MAP, CHART_THEMES
 │   ├── periods.py         # 기간 프리셋 계산
-│   └── transform.py       # wide 피벗, ffill, 정규화
-├── pages/
-│   ├── 1_admin_symbols.py # 종목마스터 관리(CRUD)
-│   └── 2_admin_prices.py  # 종가내역 조회(페이징)
+│   ├── transform.py       # wide 피벗, ffill, 정규화, SMA 계산
+│   └── ma_config.py       # 이동평균 설정 상수 (윈도우·라인 스타일)
 └── services/              # connection / auth / symbol_service / price_service
 ```
 
@@ -103,7 +109,8 @@ uv run streamlit run dashboard/app.py
 
 - 로컬 URL: http://localhost:8501
 - 배포 URL(Streamlit Community Cloud): https://finsight-6w7curblqtuspd88xx7wjy.streamlit.app/
-- 관리자 페이지는 비밀번호 인증 필요(`ADMIN_PASSWORD`).
+- 좌측 메뉴: 시장지표트랜드 | 이동평균분석 | 시장지표일별시세 | Admin Symbols
+- Admin Symbols는 비밀번호 인증 필요(`ADMIN_PASSWORD`).
   - 로컬: `.streamlit/secrets.toml`, 배포: Cloud Secrets에 `DATABASE_URL`·`ADMIN_PASSWORD` 설정.
 
 #### 서버 완전 종료
