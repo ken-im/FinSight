@@ -3,8 +3,8 @@
 import pandas as pd
 import streamlit as st
 
-from services.auth import require_admin
-from services.symbol_service import (
+from dashboard.services.auth import require_admin
+from dashboard.services.symbol_service import (
     DeleteBlockedError,
     DuplicateSymbolError,
     create_symbol,

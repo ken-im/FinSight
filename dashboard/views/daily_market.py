@@ -6,9 +6,9 @@ from datetime import date
 import pandas as pd
 import streamlit as st
 
-from services.price_service import PAGE_SIZE, list_daily_prices
-from services.symbol_service import list_symbols
-from finsight_lib.periods import DEFAULT_PRESET, DIRECT_LABEL, PRESETS, from_date_by_preset
+from dashboard.services.price_service import PAGE_SIZE, list_daily_prices
+from dashboard.services.symbol_service import list_symbols
+from dashboard.finsight_lib.periods import DEFAULT_PRESET, DIRECT_LABEL, PRESETS, from_date_by_preset
 
 
 @st.cache_data(ttl=86400, show_spinner=False)

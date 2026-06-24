@@ -6,12 +6,12 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from services.price_service import get_series
-from services.symbol_service import list_symbols
-from finsight_lib.palette import CHART_THEMES
-from finsight_lib.periods import DEFAULT_PRESET, DIRECT_LABEL, PRESETS, from_date_by_preset
-from finsight_lib.transform import calc_sma
-from finsight_lib.ma_config import (
+from dashboard.services.price_service import get_series
+from dashboard.services.symbol_service import list_symbols
+from dashboard.finsight_lib.palette import CHART_THEMES
+from dashboard.finsight_lib.periods import DEFAULT_PRESET, DIRECT_LABEL, PRESETS, from_date_by_preset
+from dashboard.finsight_lib.transform import calc_sma
+from dashboard.finsight_lib.ma_config import (
     MA_DEFAULTS,
     MA_LINE_STYLES,
     MA_OPTION_NAMES,
