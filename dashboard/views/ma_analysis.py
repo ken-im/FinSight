@@ -72,7 +72,7 @@ with st.sidebar:
             default_from = to_date.replace(year=to_date.year - 1)
         except ValueError:
             default_from = to_date.replace(year=to_date.year - 1, day=28)
-        from_date: date = st.date_input("\uc2dc\uc791\uc77c", value=default_from, key="ma_from")
+        from_date: date = st.date_input("\uc2dc\uc791\uc77c", value=default_from, min_value=date(1990, 1, 2), key="ma_from")
     else:
         from_date = from_date_by_preset(to_date, preset)
         st.caption(f"\uc2dc\uc791\uc77c: {from_date.strftime('%Y-%m-%d')}")
