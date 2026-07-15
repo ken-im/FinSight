@@ -48,6 +48,12 @@ class SymbolMaster(Base):
     remark: Mapped[str | None] = mapped_column(
         String(255), comment="비고 (설명, 분류 등)"
     )
+    data_frequency: Mapped[str | None] = mapped_column(
+        String(20), comment="데이터 주기 (Daily, Weekly, Monthly, Yearly, Irregular)"
+    )
+    category: Mapped[str | None] = mapped_column(
+        String(20), comment="분류 (Market, Stock, FRED)"
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False, comment="등록 일시"
     )

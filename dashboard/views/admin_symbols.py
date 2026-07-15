@@ -17,11 +17,15 @@ require_admin()
 
 st.header("\U0001f5c2\ufe0f \uc885\ubaa9\ub9c8\uc2a4\ud130 \uad00\ub9ac")
 
+_FREQ_OPTIONS = ["Daily", "Weekly", "Monthly", "Yearly", "Irregular"]
+
 FORM_KEYS = {
     "source": "form_source",
     "symbol": "form_symbol",
     "symbol_nm": "form_nm",
     "remark": "form_remark",
+    "data_frequency": "form_freq",
+    "category": "form_category",
 }
 
 
@@ -48,7 +52,7 @@ rows = list_symbols(
 # \u2500\u2500 \ubaa9\ub85d (\ud589 \uc120\ud0dd) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 st.subheader("\uc885\ubaa9 \ubaa9\ub85d")
 if rows:
-    df = pd.DataFrame(rows)[["symbol_id", "source", "symbol", "symbol_nm", "remark"]]
+    df = pd.DataFrame(rows)[["symbol_id", "source", "symbol", "symbol_nm", "data_frequency", "category", "remark"]]
     event = st.dataframe(
         df,
         hide_index=True,
@@ -72,6 +76,8 @@ if selected_id != st.session_state.get("_bound_id"):
     st.session_state[FORM_KEYS["symbol"]] = record.get("symbol", "")
     st.session_state[FORM_KEYS["symbol_nm"]] = record.get("symbol_nm", "")
     st.session_state[FORM_KEYS["remark"]] = record.get("remark") or ""
+    st.session_state[FORM_KEYS["data_frequency"]] = record.get("data_frequency") or "Daily"
+    st.session_state[FORM_KEYS["category"]] = record.get("category") or ""
 
 # \u2500\u2500 \uc785\ub825 \ud3fc \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 st.subheader("\uc785\ub825")
@@ -83,6 +89,9 @@ c1, c2 = st.columns(2)
 c1.text_input("source", key=FORM_KEYS["source"])
 c2.text_input("symbol", key=FORM_KEYS["symbol"])
 st.text_input("symbol_nm", key=FORM_KEYS["symbol_nm"])
+c3, c4 = st.columns(2)
+c3.selectbox("data_frequency", options=_FREQ_OPTIONS, key=FORM_KEYS["data_frequency"])
+c4.text_input("category", key=FORM_KEYS["category"])
 st.text_input("remark", key=FORM_KEYS["remark"])
 
 
@@ -92,6 +101,8 @@ def _form_values() -> dict:
         "symbol": st.session_state.get(FORM_KEYS["symbol"], "").strip(),
         "symbol_nm": st.session_state.get(FORM_KEYS["symbol_nm"], "").strip(),
         "remark": (st.session_state.get(FORM_KEYS["remark"], "") or "").strip() or None,
+        "data_frequency": st.session_state.get(FORM_KEYS["data_frequency"]) or None,
+        "category": (st.session_state.get(FORM_KEYS["category"], "") or "").strip() or None,
     }
 
 

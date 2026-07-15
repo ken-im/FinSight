@@ -22,7 +22,7 @@ import pandas as pd
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from src.collectors import fdr_collector, yahoo_collector
+from src.collectors import fdr_collector, fred_collector, yahoo_collector
 from src.db.database import engine, healthcheck
 from src.db.models import SymbolMaster
 from src.init_db import create_tables
@@ -37,6 +37,7 @@ DATE_FMT = "%Y%m%d"
 _COLLECTORS: dict[str, Callable[[str, str, str], pd.DataFrame]] = {
     "FDR": fdr_collector.collect_daily_prices,
     "YAHOO": yahoo_collector.collect_daily_prices,
+    "FRED": fred_collector.collect_daily_prices,
 }
 
 

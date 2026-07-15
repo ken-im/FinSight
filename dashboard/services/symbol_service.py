@@ -34,6 +34,8 @@ def _to_dict(row: SymbolMaster) -> dict:
         "symbol": row.symbol,
         "symbol_nm": row.symbol_nm,
         "remark": row.remark,
+        "data_frequency": row.data_frequency,
+        "category": row.category,
         "created_at": row.created_at,
         "updated_at": row.updated_at,
     }
@@ -76,12 +78,18 @@ def _exists_source_symbol(
     return session.scalar(stmt) is not None
 
 
-def create_symbol(source: str, symbol: str, symbol_nm: str, remark: str | None) -> int:
+def create_symbol(
+    source: str, symbol: str, symbol_nm: str, remark: str | None,
+    data_frequency: str | None = None, category: str | None = None,
+) -> int:
     """신규 등록. 중복 시 DuplicateSymbolError."""
     with Session(get_engine()) as session:
         if _exists_source_symbol(session, source, symbol):
             raise DuplicateSymbolError(f"이미 존재하는 종목입니다: {source}/{symbol}")
-        row = SymbolMaster(source=source, symbol=symbol, symbol_nm=symbol_nm, remark=remark)
+        row = SymbolMaster(
+            source=source, symbol=symbol, symbol_nm=symbol_nm, remark=remark,
+            data_frequency=data_frequency, category=category,
+        )
         session.add(row)
         try:
             session.commit()
@@ -93,7 +101,8 @@ def create_symbol(source: str, symbol: str, symbol_nm: str, remark: str | None) 
 
 
 def update_symbol(
-    symbol_id: int, source: str, symbol: str, symbol_nm: str, remark: str | None
+    symbol_id: int, source: str, symbol: str, symbol_nm: str, remark: str | None,
+    data_frequency: str | None = None, category: str | None = None,
 ) -> None:
     """수정. ORM 객체 방식으로 updated_at(onupdate) 자동 갱신. 중복 시 DuplicateSymbolError."""
     with Session(get_engine()) as session:
@@ -106,6 +115,8 @@ def update_symbol(
         row.symbol = symbol
         row.symbol_nm = symbol_nm
         row.remark = remark
+        row.data_frequency = data_frequency
+        row.category = category
         try:
             session.commit()
         except IntegrityError as exc:

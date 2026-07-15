@@ -31,7 +31,13 @@ def create_tables() -> None:
 
 
 def get_or_create_symbol(
-    session: Session, source: str, symbol: str, symbol_nm: str, remark: str | None = None
+    session: Session,
+    source: str,
+    symbol: str,
+    symbol_nm: str,
+    remark: str | None = None,
+    data_frequency: str | None = None,
+    category: str | None = None,
 ) -> int:
     """(source, symbol)로 종목마스터를 조회하고 없으면 등록 후 symbol_id를 반환한다."""
     stmt = select(SymbolMaster).where(
@@ -43,10 +49,11 @@ def get_or_create_symbol(
         return row.symbol_id
 
     row = SymbolMaster(
-        source=source, symbol=symbol, symbol_nm=symbol_nm, remark=remark
+        source=source, symbol=symbol, symbol_nm=symbol_nm, remark=remark,
+        data_frequency=data_frequency, category=category,
     )
     session.add(row)
-    session.flush()  # symbol_id 채번
+    session.flush()
     logger.info("신규 종목 등록: %s/%s (symbol_id=%d)", source, symbol, row.symbol_id)
     return row.symbol_id
 
