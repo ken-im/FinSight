@@ -52,7 +52,9 @@ rows = list_symbols(
 # \u2500\u2500 \ubaa9\ub85d (\ud589 \uc120\ud0dd) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 st.subheader("\uc885\ubaa9 \ubaa9\ub85d")
 if rows:
-    df = pd.DataFrame(rows)[["symbol_id", "source", "symbol", "symbol_nm", "data_frequency", "category", "remark"]]
+    _cols = ["symbol_id", "source", "symbol", "symbol_nm", "data_frequency", "category", "remark"]
+    df = pd.DataFrame(rows)
+    df = df[[c for c in _cols if c in df.columns]]
     event = st.dataframe(
         df,
         hide_index=True,

@@ -34,8 +34,8 @@ def _to_dict(row: SymbolMaster) -> dict:
         "symbol": row.symbol,
         "symbol_nm": row.symbol_nm,
         "remark": row.remark,
-        "data_frequency": row.data_frequency,
-        "category": row.category,
+        "data_frequency": getattr(row, "data_frequency", None),
+        "category": getattr(row, "category", None),
         "created_at": row.created_at,
         "updated_at": row.updated_at,
     }
@@ -86,10 +86,12 @@ def create_symbol(
     with Session(get_engine()) as session:
         if _exists_source_symbol(session, source, symbol):
             raise DuplicateSymbolError(f"이미 존재하는 종목입니다: {source}/{symbol}")
-        row = SymbolMaster(
-            source=source, symbol=symbol, symbol_nm=symbol_nm, remark=remark,
-            data_frequency=data_frequency, category=category,
-        )
+        kwargs: dict = dict(source=source, symbol=symbol, symbol_nm=symbol_nm, remark=remark)
+        if hasattr(SymbolMaster, "data_frequency"):
+            kwargs["data_frequency"] = data_frequency
+        if hasattr(SymbolMaster, "category"):
+            kwargs["category"] = category
+        row = SymbolMaster(**kwargs)
         session.add(row)
         try:
             session.commit()
@@ -115,8 +117,10 @@ def update_symbol(
         row.symbol = symbol
         row.symbol_nm = symbol_nm
         row.remark = remark
-        row.data_frequency = data_frequency
-        row.category = category
+        if hasattr(row, "data_frequency"):
+            row.data_frequency = data_frequency
+        if hasattr(row, "category"):
+            row.category = category
         try:
             session.commit()
         except IntegrityError as exc:
